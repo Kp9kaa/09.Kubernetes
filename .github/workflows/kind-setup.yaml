@@ -23,9 +23,10 @@ jobs:
 
       - name: Install KinD
         run: |
-          curl -Lo /usr/local/bin/kind \
+          curl -Lo kind \
             https://kind.sigs.k8s.io/dl/v0.23.0/kind-linux-amd64
-          chmod +x /usr/local/bin/kind
+          chmod +x kind
+          mv kind /usr/local/bin/kind
           kind version
 
       - name: Create KinD cluster
