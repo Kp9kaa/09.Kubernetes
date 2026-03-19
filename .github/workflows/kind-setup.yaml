@@ -1,0 +1,44 @@
+name: KinD Cluster Setup
+
+on:
+  push:
+    branches: ["main", "master"]
+  workflow_dispatch:
+
+jobs:
+  kind-setup:
+    name: Setup KinD Cluster
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+          kubectl version --client
+
+      - name: Install KinD
+        run: |
+          curl -Lo /usr/local/bin/kind \
+            https://kind.sigs.k8s.io/dl/v0.31.0/kind-linux-amd64
+          chmod +x /usr/local/bin/kind
+          kind version
+
+      - name: Create KinD cluster
+        run: kind create cluster --name k8s-academy --wait 60s
+
+      - name: Verify cluster nodes
+        run: kubectl get nodes -o wide
+
+      - name: Verify system pods
+        run: kubectl get pods -A
+
+      - name: Cluster info
+        run: kubectl cluster-info --context kind-k8s-academy
+
+      - name: Delete KinD cluster
+        if: always()
+        run: kind delete cluster --name k8s-academy

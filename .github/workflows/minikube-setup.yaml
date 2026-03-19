@@ -1,0 +1,61 @@
+name: Minikube Cluster Setup
+
+on:
+  pull_request:
+    branches: ["main", "master"]
+  workflow_dispatch:
+
+jobs:
+  minikube-setup:
+    name: Setup Minikube Cluster
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Record start time
+        id: timer
+        run: echo "start=$(date +%s)" >> $GITHUB_OUTPUT
+
+      - name: Install kubectl
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+          kubectl version --client
+
+      - name: Install Minikube
+        run: |
+          curl -Lo /usr/local/bin/minikube \
+            https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+          chmod +x /usr/local/bin/minikube
+          minikube version
+
+      - name: Start Minikube cluster
+        run: |
+          minikube start \
+            --driver=docker \
+            --kubernetes-version=stable \
+            --wait=all
+
+      - name: Calculate spin-up time
+        run: |
+          END=$(date +%s)
+          START=${{ steps.timer.outputs.start }}
+          echo "⏱ Cluster spin-up time: $(( END - START )) seconds"
+
+      - name: Verify cluster nodes
+        run: kubectl get nodes -o wide
+
+      - name: Verify system pods
+        run: kubectl get pods -A
+
+      - name: Cluster info
+        run: kubectl cluster-info
+
+      - name: Show Kubernetes version
+        run: kubectl version
+
+      - name: Delete Minikube cluster
+        if: always()
+        run: minikube delete
