@@ -3,8 +3,6 @@ name: Minikube Cluster Setup
 on:
   pull_request:
     branches: ["main", "master"]
-    paths:
-      - "09.Kubernetes/**"
   workflow_dispatch:
 
 jobs:
